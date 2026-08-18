@@ -1,1 +1,1 @@
-# Barbell-Attachment-Maxanator
+# BAM - Barbell Attachment Maxanator
