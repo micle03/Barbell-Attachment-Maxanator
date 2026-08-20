@@ -3,14 +3,16 @@
 #include <Wire.h>
 #include <cmath>
 
+#define RAD_TO_DEG 57.295779513082320876798154814105
+#define DEG_TO_RAD 0.017453292519943295769236907684886
+
 Adafruit_MPU6050 mpu;
 
 unsigned long previousTime = 0;
 unsigned long startTime = 0;
 unsigned long elapsedTime = 0;
 
-const float RAD_TO_DEG = 57.2958;
-const float DEG_TO_RAD = 1/RAD_TO_DEG;
+
 const float gravity = 9.81; /* m/s^2 */
 const float ACCEL_UNCERTAINTY = 0.05;  /* m/s^2 */
 const float GYRO_UNCERTAINTY  = 0.05;  /* rad/s*/
@@ -96,26 +98,27 @@ void loop() {
 
   Serial.print(" Total: ");
   Serial.println(tot_a);
-  
-  /*vel = vI + tot_a * t; /* Uses Kinematics equation to find the velocity
 
-  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); /* Total gyroscope data magnitude
   
-  /* If the bar isn't moving set the velocity to 0
+  vel = vI + tot_a * t; /* Uses Kinematics equation to find the velocity */
+
+  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); /* Total gyroscope data magnitude */
+  
+  /*If the bar isn't moving set the velocity to 0 */
   if (fabs(tot_a) < ACCEL_UNCERTAINTY && tot_gyro < GYRO_UNCERTAINTY) {
     vel = 0;
     
   }
   
-  /* If the velocity is bigger than 0 and equal to or less than 0.15 max bench press has been reached
+  /* If the velocity is bigger than 0 and equal to or less than 0.15 max bench press has been reached */
   if (vel > 0 && vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
     Serial.println("Max bench has been reached ");
-    return; /* Max has been achieved, not neccesary to do the max weight calculations
+    return; /* Max has been achieved, not neccesary to do the max weight calculations */
   }
 
   vI = vel;
   
-  /* Newtons 2nd law - Calculates the the surplus of extra force used during the non maxed out movements and finds the extra weight that can be pushed to find the max weight
+  /* Newtons 2nd law - Calculates the the surplus of extra force used during the non maxed out movements and finds the extra weight that can be pushed to find the max weight */
   force = weightKgs * tot_a;
 
   added_weight = (force / gravity) * kg_to_lbs;
@@ -123,7 +126,7 @@ void loop() {
   Serial.println("Speed in m/s: ");
   Serial.println(vel);
   Serial.println("Max Bench weight is: ");
-  Serial.print(weightLbs + added_weight);
+  Serial.print(weightLbs + added_weight); 
   
 }
 
