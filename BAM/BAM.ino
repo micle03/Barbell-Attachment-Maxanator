@@ -119,13 +119,13 @@ void loop() {
 //   
 //   /* Newtons 2nd law - Calculates the the surplus of extra force used during the non maxed out movements and finds the extra weight that can be pushed to find the max weight */
 //   force = weightKgs * tot_a;
-// 
 //   added_weight = (force / gravity) * kg_to_lbs;
 //   
 //   Serial.println("Speed in m/s: ");
 //   Serial.println(vel);
 //   Serial.println("Max Bench weight is: ");
-//   Serial.print(weightLbs + added_weight);
+//   Serial.println(weightLbs + added_weight);
+//   Serial.println("");
   
 }
 
