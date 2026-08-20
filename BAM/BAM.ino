@@ -12,9 +12,12 @@ unsigned long elapsedTime = 0;
 const float RAD_TO_DEG = 57.2958;
 const float DEG_TO_RAD = 1/RAD_TO_DEG;
 const float gravity = 9.81; /* m/s^2 */
-const float ACCEL_THRESHOLD = 0.05;  /* m/s^2 */
-const float GYRO_THRESHOLD  = 0.05;  /* rad/s*/
-const float FAIL_BENCH = 0.15; /* m/s */ 
+const float ACCEL_UNCERTAINTY = 0.05;  /* m/s^2 */
+const float GYRO_UNCERTAINTY  = 0.05;  /* rad/s*/
+const float FAIL_BENCH = 0.15;  /* m/s */ 
+const float weightLbs = 180; 
+const float kg_to_lbs = 2.2046;
+const float weightKgs = weightLbs / kg_to_lbs ;
 
 float pitch = 0;
 float roll = 0;
@@ -23,16 +26,16 @@ float pitch_RAD = 0;
 float roll_RAD = 0;
 float global_a = 0;
 float vI = 0;
-float vF = 0;
 float tot_a= 0;
+float force = 0;
+float added_weight = 0;
+
 
 void setup(void) {
   Serial.begin(115200);
   
   while (!Serial)
     delay(10); 
-
-  Serial.println("Adafruit MPU6050 test!");
 
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
@@ -57,7 +60,7 @@ void loop() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
-
+  /* Set time */
   unsigned long currentTime = micros();
   float t = (currentTime - previousTime) / 1000000.0;
   previousTime = currentTime;
@@ -93,27 +96,34 @@ void loop() {
 
   Serial.print(" Total: ");
   Serial.println(tot_a);
-
+  
   /*vel = vI + tot_a * t; /* Uses Kinematics equation to find the velocity
 
   float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); /* Total gyroscope data magnitude
   
   /* If the bar isn't moving set the velocity to 0
-  if (fabs(tot_a) < ACCEL_THRESHOLD && tot_gyro < GYRO_THRESHOLD) {
+  if (fabs(tot_a) < ACCEL_UNCERTAINTY && tot_gyro < GYRO_UNCERTAINTY) {
     vel = 0;
     
+  }
+  
+  /* If the velocity is bigger than 0 and equal to or less than 0.15 max bench press has been reached
+  if (vel > 0 && vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
+    Serial.println("Max bench has been reached ");
+    return; /* Max has been achieved, not neccesary to do the max weight calculations
   }
 
   vI = vel;
   
-  /* If the velocity is equal to or less than 0.15 max bench press has been reached
-  if (vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
-    Serial.println("Max bench has been reached ");
-  }
+  /* Newtons 2nd law - Calculates the the surplus of extra force used during the non maxed out movements and finds the extra weight that can be pushed to find the max weight
+  force = weightKgs * tot_a;
+
+  added_weight = (force / gravity) * kg_to_lbs;
   
   Serial.println("Speed in m/s: ");
-  Serial.println(vel);*/
-
+  Serial.println(vel);
+  Serial.println("Max Bench weight is: ");
+  Serial.print(weightLbs + added_weight);
   
 }
 
