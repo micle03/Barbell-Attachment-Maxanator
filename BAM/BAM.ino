@@ -3,9 +3,6 @@
 #include <Wire.h>
 #include <cmath>
 
-#define RAD_TO_DEG 57.295779513082320876798154814105
-#define DEG_TO_RAD 0.017453292519943295769236907684886
-
 Adafruit_MPU6050 mpu;
 
 unsigned long previousTime = 0;
@@ -137,7 +134,6 @@ void loop() {
       return; 
     } 
     
-  
     force = weightKgs * tot_a;
     added_weight = (force / gravity) * kg_to_lbs;
     
