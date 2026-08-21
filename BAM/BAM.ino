@@ -12,14 +12,13 @@ unsigned long previousTime = 0;
 unsigned long startTime = 0;
 unsigned long elapsedTime = 0;
 
-
 const float gravity = 9.81; /* m/s^2 */
 const float ACCEL_UNCERTAINTY = 0.05;  /* m/s^2 */
 const float GYRO_UNCERTAINTY  = 0.05;  /* rad/s*/
 const float FAIL_BENCH = 0.15;  /* m/s */ 
-const float weightLbs = 180; 
+const float weightLbs = 180; /* lbs */
 const float kg_to_lbs = 2.2046;
-const float weightKgs = weightLbs / kg_to_lbs ;
+const float weightKgs = weightLbs / kg_to_lbs ; /* kg */
 
 float pitch = 0;
 float roll = 0;
@@ -112,6 +111,8 @@ void loop() {
 //   /* If the velocity is bigger than 0 and equal to or less than 0.15 max bench press has been reached */
 //   if (vel > 0 && vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
 //     Serial.println("Max bench has been reached ");
+//     Serial.print("Speed in m/s: ");
+//     Serial.println(vel);
 //     return; /* Max has been achieved, not neccesary to do the max weight calculations */
 //   }
 // 
@@ -121,11 +122,12 @@ void loop() {
 //   force = weightKgs * tot_a;
 //   added_weight = (force / gravity) * kg_to_lbs;
 //   
-//   Serial.println("Speed in m/s: ");
+//   Serial.print("Speed in m/s: ");
 //   Serial.println(vel);
-//   Serial.println("Max Bench weight is: ");
-//   Serial.println(weightLbs + added_weight);
-//   Serial.println("");
+//   Serial.print("Max Bench weight is: ");
+//   Serial.print(weightLbs + added_weight);
+//   Serial.println(" lbs");
+//   Serial.println("")
   
 }
 
