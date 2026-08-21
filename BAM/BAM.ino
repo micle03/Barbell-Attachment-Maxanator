@@ -11,14 +11,14 @@ Adafruit_MPU6050 mpu;
 unsigned long previousTime = 0;
 unsigned long startTime = 0;
 unsigned long elapsedTime = 0;
-
-const float gravity = 9.81; /* m/s^2 */
-const float ACCEL_UNCERTAINTY = 0.05;  /* m/s^2 */
-const float GYRO_UNCERTAINTY  = 0.05;  /* rad/s*/
-const float FAIL_BENCH = 0.15;  /* m/s */ 
-const float weightLbs = 180; /* lbs */
+unsigned long timeRacked = 0;
+const float gravity = 9.81; 
+const float ACCEL_UNCERTAINTY = 0.05;  
+const float GYRO_UNCERTAINTY  = 0.05;  
+const float FAIL_BENCH = 0.15;  
+const float weightLbs = 180; 
 const float kg_to_lbs = 2.2046;
-const float weightKgs = weightLbs / kg_to_lbs ; /* kg */
+const float weightKgs = weightLbs / kg_to_lbs ; 
 
 float pitch = 0;
 float roll = 0;
@@ -31,6 +31,8 @@ float tot_a= 0;
 float force = 0;
 float added_weight = 0;
 
+bool isRacked = false;
+bool isTracking = false;
 
 void setup(void) {
   Serial.begin(115200);
@@ -57,31 +59,39 @@ void setup(void) {
   previousTime = startTime;
 }
 
-while (True){
+void loop() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
-  /* Set time */
   unsigned long currentTime = micros();
   float t = (currentTime - previousTime) / 1000000.0;
   previousTime = currentTime;
 
-  float pitch_angle = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.z * a.acceleration.z)) * RAD_TO_DEG; /* Finding forward / backwards tilt angle + Conversion to DEG*/
-  float roll_angle = atan2(-a.acceleration.x, sqrt(a.acceleration.z * a.acceleration.z + a.acceleration.y * a.acceleration.y )) * RAD_TO_DEG; /* Finding side to side tilt angle + Conversion to DEG*/
+  float pitch_angle = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.z * a.acceleration.z)) * RAD_TO_DEG; 
+  float roll_angle = atan2(-a.acceleration.x, sqrt(a.acceleration.z * a.acceleration.z + a.acceleration.y * a.acceleration.y )) * RAD_TO_DEG; 
 
-  /* Clearing noise in vibrations and other discrepancies */
   pitch = 0.98 * (pitch + (g.gyro.x * RAD_TO_DEG) * t) + 0.02 * pitch_angle; 
   roll = 0.98 * (roll + (g.gyro.y * RAD_TO_DEG) * t) + 0.02 * roll_angle;
   
-  /* Return to RAD*/
   pitch_RAD = pitch * DEG_TO_RAD;
   roll_RAD = roll * DEG_TO_RAD;
 
-  /* Finds glabal acceleration produced during the movement using the result of the dot product of the roll and pitch rotation matrixes*/
   global_a = (-sin(pitch_RAD) * a.acceleration.x + sin(roll_RAD)*cos(pitch_RAD) * a.acceleration.y + cos(roll_RAD)*cos(pitch_RAD) * a.acceleration.z); 
 
-  /* Takes out gravity gives total output acceleration from the user*/
   tot_a = global_a - gravity;
+
+  if (fabs(tot_a) >= ACCEL_UNCERTAINTY){
+    if (!isTracking){
+      Serial.println("Tracking");
+      isTracking = true;
+    }
+  }else{
+    tot_a = 0;
+  }
+
+  if (!isTracking){
+    return;
+  }
 
   Serial.print("X: ");
   Serial.print(a.acceleration.x);
@@ -98,39 +108,47 @@ while (True){
   Serial.print(" Total: ");
   Serial.println(tot_a);
 
-//   vel = vI + tot_a * t; /* Uses Kinematics equation to find the velocity */
-// 
-//   float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); /* Total gyroscope data magnitude */
-//   
-//   /*If the bar isn't moving set the velocity to 0 */
-//   if (fabs(tot_a) < ACCEL_UNCERTAINTY && tot_gyro < GYRO_UNCERTAINTY) {
-//     vel = 0;
-//     
-//   }
-//   
-//   /* If the velocity is bigger than 0 and equal to or less than 0.15 max bench press has been reached */
-//   if (vel > 0 && vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
-//     Serial.println("Max bench has been reached ");
-//     Serial.print("Speed in m/s: ");  
-//     Serial.println(vel);
-//     continue; /* Max has been achieved, not neccesary to do the max weight calculations */
-//   }
-// 
-//   vI = vel;
-//   
-//   /* Newtons 2nd law - Calculates the the surplus of extra force used during the non maxed out movements and finds the extra weight that can be pushed to find the max weight */
-//   force = weightKgs * tot_a;
-//   added_weight = (force / gravity) * kg_to_lbs;
-//   
-//   Serial.print("Speed in m/s: ");
-//   Serial.println(vel);
-//   Serial.print("Max Bench weight is: ");
-//   Serial.print(weightLbs + added_weight);
-//   Serial.println(" lbs");
-//   Serial.println("")
-}
-void loop() {
-  
-  
-}
+  vel = vI + tot_a * t; 
 
+  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
+  
+  if (tot_a == 0 && tot_gyro < GYRO_UNCERTAINTY) {
+    vel = 0;
+    if (!isRacked){
+      timeRacked = millis();
+      isRacked = true;
+    }
+  } else{
+    isRacked = false;
+  }
+  
+  if (isRacked && millis() - timeRacked >= 3000){
+    Serial.println("Bar is Racked");
+    isTracking = false;
+    vI = vel;
+    return;
+  }
+  if (vel > 0){
+    if (vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
+      Serial.println("Max bench has been reached ");
+      Serial.print("Speed in m/s: ");  
+      Serial.println(vel);
+      return; 
+    } 
+    
+  
+    force = weightKgs * tot_a;
+    added_weight = (force / gravity) * kg_to_lbs;
+    
+    Serial.print("Speed in m/s: ");
+    Serial.println(vel);
+    Serial.print("Max Bench weight is: ");
+    Serial.print(weightLbs + added_weight);
+    Serial.println(" lbs");
+    Serial.println("");
+  } else{
+    vel = 0;
+    isTracking = false;
+  }
+  vI = vel;
+}
