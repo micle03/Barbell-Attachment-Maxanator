@@ -12,6 +12,7 @@ unsigned long previousTime = 0;
 unsigned long startTime = 0;
 unsigned long elapsedTime = 0;
 unsigned long timeRacked = 0;
+
 const float gravity = 9.81; 
 const float ACCEL_UNCERTAINTY = 0.05;  
 const float GYRO_UNCERTAINTY  = 0.05;  
