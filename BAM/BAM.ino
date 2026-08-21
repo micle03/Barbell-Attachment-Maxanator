@@ -57,7 +57,7 @@ void setup(void) {
   previousTime = startTime;
 }
 
-void loop() {
+while (True){
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
@@ -111,9 +111,9 @@ void loop() {
 //   /* If the velocity is bigger than 0 and equal to or less than 0.15 max bench press has been reached */
 //   if (vel > 0 && vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
 //     Serial.println("Max bench has been reached ");
-//     Serial.print("Speed in m/s: ");
+//     Serial.print("Speed in m/s: ");  
 //     Serial.println(vel);
-//     return; /* Max has been achieved, not neccesary to do the max weight calculations */
+//     continue; /* Max has been achieved, not neccesary to do the max weight calculations */
 //   }
 // 
 //   vI = vel;
@@ -128,6 +128,9 @@ void loop() {
 //   Serial.print(weightLbs + added_weight);
 //   Serial.println(" lbs");
 //   Serial.println("")
+}
+void loop() {
+  
   
 }
 
