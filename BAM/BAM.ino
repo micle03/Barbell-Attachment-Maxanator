@@ -39,6 +39,9 @@ float vI = 0;
 float tot_a= 0;
 float force = 0;
 float added_weight = 0;
+float estimated_max = 0;
+float peak_vel = 999.0;
+float peak_max = 0;
 
 bool isRacked = false;
 bool isTracking = false;
@@ -139,6 +142,15 @@ void loop() {
     Serial.println("Bar is Racked");
     isTracking = false;
     vI = vel;
+    
+    if (peak_vel == 999.0) {
+      peak_vel = 0;
+    }
+
+    Blynk.virtualWrite(V0, peak_vel);
+    Blynk.virtualWrite(V1, peak_max);
+    peak_vel = 999.0;
+    peak_max = 0;
     return;
   }
   if (vel > 0){
@@ -151,7 +163,8 @@ void loop() {
     
     force = weightKgs * tot_a;
     added_weight = (force / gravity) * kg_to_lbs;
-    estimated_max = weightLbs + added_weight
+    estimated_max = weightLbs + added_weight;
+    
     Serial.print("Speed in m/s: ");
     Serial.println(vel);
     Serial.print("Max Bench weight is: ");
@@ -164,6 +177,11 @@ void loop() {
   }
   vI = vel;
 
-  Blynk.virtualWrite(V0, vel);
-  Blynk.virtualWrite(V1, estimated_max)
+  if (vel > 0 && vel < peak_vel){
+    peak_vel = vel;
+  }
+
+  if (estimated_max > peak_max){
+    peak_max = estimated_max;
+  }
 }
