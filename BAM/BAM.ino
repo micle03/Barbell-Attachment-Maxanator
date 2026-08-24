@@ -1,5 +1,4 @@
 #define BLYNK_PRINT Serial
-
 #define BLYNK_TEMPLATE_ID "TM2LRP8Exw1k"
 #define BLYNK_TEMPLATE_NAME "BAM"
 #define BLYNK_AUTH_TOKEN "tlB5JPdD1yG7W0LN7ryF1riytCsvHwkn"
