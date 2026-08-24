@@ -1,7 +1,19 @@
+#define BLYNK_PRINT Serial
+
+#define BLYNK_TEMPLATE_ID "TM2LRP8Exw1k"
+#define BLYNK_TEMPLATE_NAME "BAM"
+#define BLYNK_AUTH_TOKEN "tlB5JPdD1yG7W0LN7ryF1riytCsvHwkn"
+
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <cmath>
+
+char ssid[] = "Micle's iphone";
+char pass[] = "brawlstars";
 
 Adafruit_MPU6050 mpu;
 
@@ -52,12 +64,16 @@ void setup(void) {
 
   Serial.println("");
   delay(100);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   
   startTime = micros();
   previousTime = startTime;
 }
 
 void loop() {
+  Blynk.run();
+
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
@@ -106,7 +122,6 @@ void loop() {
   Serial.print(" Total: ");
   Serial.println(tot_a);
   
-  /*
   vel = vI + tot_a * t; 
 
   float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
@@ -137,11 +152,11 @@ void loop() {
     
     force = weightKgs * tot_a;
     added_weight = (force / gravity) * kg_to_lbs;
-    
+    estimated_max = weightLbs + added_weight
     Serial.print("Speed in m/s: ");
     Serial.println(vel);
     Serial.print("Max Bench weight is: ");
-    Serial.print(weightLbs + added_weight);
+    Serial.print(estimated_max);
     Serial.println(" lbs");
     Serial.println("");
   } else{
@@ -149,5 +164,7 @@ void loop() {
     isTracking = false;
   }
   vI = vel;
-  */
+
+  Blynk.virtualWrite(V0, vel);
+  Blynk.virtualWrite(V1, estimated_max)
 }
