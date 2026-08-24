@@ -105,7 +105,8 @@ void loop() {
 
   Serial.print(" Total: ");
   Serial.println(tot_a);
-
+  
+  /*
   vel = vI + tot_a * t; 
 
   float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
@@ -148,4 +149,5 @@ void loop() {
     isTracking = false;
   }
   vI = vel;
+  */
 }
