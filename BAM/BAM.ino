@@ -23,7 +23,8 @@ unsigned long timeRacked = 0;
 
 const float gravity = 9.81; 
 const float ACCEL_UNCERTAINTY = 0.05;  
-const float GYRO_UNCERTAINTY  = 0.05;  
+const float GYRO_UNCERTAINTY  = 0.05;
+const float VEL_UNCERTAINTY = 0.012;  
 const float FAIL_BENCH = 0.15;  
 const float kg_to_lbs = 2.2046;
 
@@ -163,7 +164,7 @@ void loop() {
     return;
   }
   if (vel > 0){
-    if (vel >= FAIL_BENCH - 0.02 && vel <= FAIL_BENCH + 0.02) {
+    if (vel >= FAIL_BENCH - VEL_UNCERTAINTY && vel <= FAIL_BENCH + VEL_UNCERTAINTY) {
       Serial.println("Max bench has been reached ");
       Serial.print("Speed in m/s: ");  
       Serial.println(vel);
