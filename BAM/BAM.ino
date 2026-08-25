@@ -33,13 +33,12 @@ float roll = 0;
 float vel = 0;
 float pitch_RAD = 0;
 float roll_RAD = 0;
-float global_a = 0;
 float vI = 0;
 float tot_a= 0;
 float force = 0;
 float added_weight = 0;
 float estimated_max = 0;
-float peak_vel = 999.0;
+float peak_vel = 0;
 float peak_max = 0;
 float weightLbs = 0; 
 float weightKgs = 0;
@@ -47,6 +46,7 @@ float weightKgs = 0;
 bool isRacked = false;
 bool isTracking = false;
 
+// Sets weight value from Blynk app 
 BLYNK_WRITE(V2) {
   weightLbs = param.asFloat();
   weightKgs = weightLbs / kg_to_lbs;
@@ -55,8 +55,10 @@ BLYNK_WRITE(V2) {
 void setup(void) {
   Serial.begin(115200);
   
-  while (!Serial)
-    delay(10); 
+  unsigned long serialTimer = millis();
+  while (!Serial && millis() - serialTimer < 2500){
+    delay(10);
+  } 
 
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
@@ -73,34 +75,36 @@ void setup(void) {
   Serial.println("");
   delay(100);
 
-  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass); // Connect esp32 to internet
   
   startTime = micros();
   previousTime = startTime;
 }
 
 void loop() {
-  Blynk.run();
+  Blynk.run(); 
 
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
+  // Defining and initalizing the variables of a and g 
+  sensors_event_t a, g;
+  mpu.getEvent(&a, &g);
 
   unsigned long currentTime = micros();
   float t = (currentTime - previousTime) / 1000000.0;
   previousTime = currentTime;
 
+  // Finds angles from away from Z axis using acceleration
   float pitch_angle = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.z * a.acceleration.z)) * RAD_TO_DEG; 
   float roll_angle = atan2(-a.acceleration.x, sqrt(a.acceleration.z * a.acceleration.z + a.acceleration.y * a.acceleration.y )) * RAD_TO_DEG; 
 
+  // Takes 98% accuracy of the gyroscope and 2% of the acceleration angles to dampen noise
   pitch = 0.98 * (pitch + (g.gyro.x * RAD_TO_DEG) * t) + 0.02 * pitch_angle; 
   roll = 0.98 * (roll + (g.gyro.y * RAD_TO_DEG) * t) + 0.02 * roll_angle;
   
   pitch_RAD = pitch * DEG_TO_RAD;
   roll_RAD = roll * DEG_TO_RAD;
 
-  global_a = (-sin(pitch_RAD) * a.acceleration.x + sin(roll_RAD)*cos(pitch_RAD) * a.acceleration.y + cos(roll_RAD)*cos(pitch_RAD) * a.acceleration.z); 
-
-  tot_a = global_a - gravity;
+  // Uses rotation matrix of Rx dot Ry and uses the 3rd row for Z axis acceleration calcualtions and find the total acceleration subtracting gravity
+  tot_a = (-sin(pitch_RAD) * a.acceleration.x + sin(roll_RAD)*cos(pitch_RAD) * a.acceleration.y + cos(roll_RAD)*cos(pitch_RAD) * a.acceleration.z) - gravity; 
 
   if (fabs(tot_a) >= ACCEL_UNCERTAINTY){
     if (!isTracking){
@@ -125,16 +129,14 @@ void loop() {
   Serial.print(" Z: ");
   Serial.print(a.acceleration.z);
 
-  Serial.print(" Global: ");
-  Serial.print(global_a);
-
   Serial.print(" Total: ");
   Serial.println(tot_a);
   
-  vel = vI + tot_a * t; 
+  vel = vI + tot_a * t; // Kinematics equation
 
   float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
   
+  // Checks if the bar is racked 
   if (tot_a == 0 && tot_gyro < GYRO_UNCERTAINTY) {
     vel = 0;
     if (!isRacked){
@@ -146,51 +148,46 @@ void loop() {
     isRacked = false;
   }
   
+  // If bar is actually racked stop tracking, send the values to Blynk and reset variables to default values
   if (isRacked && millis() - timeRacked >= 3000){
     Serial.println("Bar is Racked");
     isTracking = false;
     vI = vel;
     
-    if (peak_vel == 999.0) {
-      peak_vel = 0;
-    }
-
-    Blynk.syncVirtual(V2);
     Blynk.virtualWrite(V0, peak_vel);
     Blynk.virtualWrite(V1, peak_max);
+    Blynk.syncVirtual(V2);
 
-    peak_vel = 999.0;
+    peak_vel = 0;
     peak_max = 0;
     return;
   }
+
   if (vel > 0){
+    // Finds if the current weight is max 
     if (vel >= FAIL_BENCH - VEL_UNCERTAINTY && vel <= FAIL_BENCH + VEL_UNCERTAINTY) {
-      Serial.println("Max bench has been reached ");
-      Serial.print("Speed in m/s: ");  
-      Serial.println(vel);
+      vI = vel;
       return; 
     } 
     
+    // Finds estimated max 
     force = weightKgs * tot_a;
     added_weight = (force / gravity) * kg_to_lbs;
     estimated_max = weightLbs + added_weight;
     
-    Serial.print("Speed in m/s: ");
-    Serial.println(vel);
-    Serial.print("Max Bench weight is: ");
-    Serial.print(estimated_max);
-    Serial.println(" lbs");
-    Serial.println("");
   } 
   else{
     vel = 0;
     isTracking = false;
   }
 
-  if (vel > 0 && vel < peak_vel){
+  // checks if the velocity is less than the last 
+  if (vel > peak_vel){
+    
     peak_vel = vel;
   }
 
+  // checks if max is more than last
   if (estimated_max > peak_max){
     peak_max = estimated_max;
   }
