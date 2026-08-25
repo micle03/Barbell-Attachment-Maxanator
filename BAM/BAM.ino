@@ -75,14 +75,14 @@ void setup(void) {
   Serial.println("");
   delay(100);
 
-  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass); // Connect esp32 to internet
+  // Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass); // Connect esp32 to internet
   
   startTime = micros();
   previousTime = startTime;
 }
 
 void loop() {
-  Blynk.run(); 
+  // Blynk.run(); 
 
   // Defining and initalizing the variables of a and g 
   sensors_event_t a, g;
@@ -132,6 +132,7 @@ void loop() {
   Serial.print(" Total: ");
   Serial.println(tot_a);
   
+  /*
   vel = vI + tot_a * t; // Kinematics equation
 
   float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
@@ -150,7 +151,6 @@ void loop() {
   
   // If bar is actually racked stop tracking, send the values to Blynk and reset variables to default values
   if (isRacked && millis() - timeRacked >= 3000){
-    Serial.println("Bar is Racked");
     isTracking = false;
     vI = vel;
     
@@ -192,5 +192,5 @@ void loop() {
     peak_max = estimated_max;
   }
 
-  vI = vel;
+  vI = vel; */
 }
