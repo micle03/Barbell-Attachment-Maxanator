@@ -187,7 +187,6 @@ void loop() {
     vel = 0;
     isTracking = false;
   }
-  vI = vel;
 
   if (vel > 0 && vel < peak_vel){
     peak_vel = vel;
@@ -196,4 +195,6 @@ void loop() {
   if (estimated_max > peak_max){
     peak_max = estimated_max;
   }
+
+  vI = vel;
 }
