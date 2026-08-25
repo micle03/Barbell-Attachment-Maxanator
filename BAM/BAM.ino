@@ -27,7 +27,6 @@ const float GYRO_UNCERTAINTY  = 0.05;
 const float FAIL_BENCH = 0.15;  
 const float kg_to_lbs = 2.2046;
 
-
 float pitch = 0;
 float roll = 0;
 float vel = 0;
@@ -51,6 +50,7 @@ BLYNK_WRITE(V2) {
   weightLbs = param.asFloat();
   weightKgs = weightLbs / kg_to_lbs;
 }
+
 void setup(void) {
   Serial.begin(115200);
   
@@ -75,7 +75,6 @@ void setup(void) {
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   
   BLYNK.WRITE(V2){
-
     weightLbs = param.asFloat();
   }
   
@@ -111,7 +110,8 @@ void loop() {
       Serial.println("Tracking");
       isTracking = true;
     }
-  }else{
+  }
+  else{
     tot_a = 0;
   }
 
@@ -144,7 +144,8 @@ void loop() {
       timeRacked = millis();
       isRacked = true;
     }
-  } else{
+  } 
+  else{
     isRacked = false;
   }
   
@@ -152,15 +153,15 @@ void loop() {
     Serial.println("Bar is Racked");
     isTracking = false;
     vI = vel;
-
-    Blynk.syncVirtual(V2);
     
     if (peak_vel == 999.0) {
       peak_vel = 0;
     }
 
+    Blynk.syncVirtual(V2);
     Blynk.virtualWrite(V0, peak_vel);
     Blynk.virtualWrite(V1, peak_max);
+
     peak_vel = 999.0;
     peak_max = 0;
     return;
@@ -183,7 +184,8 @@ void loop() {
     Serial.print(estimated_max);
     Serial.println(" lbs");
     Serial.println("");
-  } else{
+  } 
+  else{
     vel = 0;
     isTracking = false;
   }
