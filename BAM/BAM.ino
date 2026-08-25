@@ -41,7 +41,7 @@ float estimated_max = 0;
 float peak_vel = 999.0;
 float peak_max = 0;
 float weightLbs = 0; 
-float wightKgs = 0;
+float weightKgs = 0;
 
 bool isRacked = false;
 bool isTracking = false;
@@ -73,10 +73,6 @@ void setup(void) {
   delay(100);
 
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
-  
-  BLYNK.WRITE(V2){
-    weightLbs = param.asFloat();
-  }
   
   startTime = micros();
   previousTime = startTime;
