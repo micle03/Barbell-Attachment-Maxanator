@@ -81,6 +81,7 @@ void setup(void) {
   previousTime = startTime;
 }
 
+// "return" does the same as "continue" for a normal while or for loop in the loop() function
 void loop() {
   // Blynk.run(); 
 
