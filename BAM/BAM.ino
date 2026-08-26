@@ -85,8 +85,8 @@ void loop() {
   // Blynk.run(); 
 
   // Defining and initalizing the variables of a and g 
-  sensors_event_t a, g;
-  mpu.getEvent(&a, &g);
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
 
   unsigned long currentTime = micros();
   float t = (currentTime - previousTime) / 1000000.0;
