@@ -161,6 +161,12 @@ void loop() {
     tot_a = 0;
     vel = 0;
     vI = vel;
+    pitch = 0;              
+    roll = 0;
+    pitch_RAD = 0;
+    roll_RAD = 0;
+    timeRacked = 0;
+    previousTime = micros();
     return;
   }
 
