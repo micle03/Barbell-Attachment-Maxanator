@@ -139,7 +139,6 @@ void loop() {
   
   // Checks if the bar is racked 
   if (tot_a == 0 && tot_gyro < GYRO_UNCERTAINTY) {
-    vel = 0;
     if (!isRacked){
       timeRacked = millis();
       isRacked = true;
@@ -152,7 +151,6 @@ void loop() {
   // If bar is actually racked stop tracking, send the values to Blynk and reset variables to default values
   if (isRacked && millis() - timeRacked >= 3000){
     isTracking = false;
-    vI = vel;
     
     Blynk.virtualWrite(V0, peak_vel);
     Blynk.virtualWrite(V1, peak_max);
@@ -160,6 +158,9 @@ void loop() {
 
     peak_vel = 0;
     peak_max = 0;
+    tot_a = 0;
+    vel = 0;
+    vI = vel;
     return;
   }
 
