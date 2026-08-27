@@ -22,11 +22,12 @@ unsigned long elapsedTime = 0;
 unsigned long timeRacked = 0;
 
 const float gravity = 9.81; 
-const float ACCEL_UNCERTAINTY = 0.05;  
+const float ACCEL_UNCERTAINTY = 0.3;  
 const float GYRO_UNCERTAINTY  = 0.05;
 const float VEL_UNCERTAINTY = 0.012;  
 const float FAIL_BENCH = 0.15;  
 const float kg_to_lbs = 2.2046;
+const float restRequired = 10;
 
 float pitch = 0;
 float roll = 0;
@@ -42,9 +43,11 @@ float peak_vel = 0;
 float peak_max = 0;
 float weightLbs = 0; 
 float weightKgs = 0;
+float restCount = 0;
 
 bool isRacked = false;
 bool isTracking = false;
+bool wasDescending = false;
 
 // Sets weight value from Blynk app 
 BLYNK_WRITE(V2) {
@@ -94,7 +97,7 @@ void loop() {
   previousTime = currentTime;
 
   // Finds angles from away from Z axis using acceleration
-  float pitch_angle = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.z * a.acceleration.z)) * RAD_TO_DEG; 
+  float pitch_angle = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.z * a.acceleration.z)) * RAD_TO_DEG;
   float roll_angle = atan2(-a.acceleration.x, sqrt(a.acceleration.z * a.acceleration.z + a.acceleration.y * a.acceleration.y )) * RAD_TO_DEG; 
 
   // Takes 98% accuracy of the gyroscope and 2% of the acceleration angles to dampen noise
@@ -106,7 +109,24 @@ void loop() {
 
   // Uses rotation matrix of Rx dot Ry and uses the 3rd row for Z axis acceleration calcualtions and find the total acceleration subtracting gravity
   tot_a = (-sin(pitch_RAD) * a.acceleration.x + sin(roll_RAD)*cos(pitch_RAD) * a.acceleration.y + cos(roll_RAD)*cos(pitch_RAD) * a.acceleration.z) - gravity; 
+  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
+  bool atRest = (fabs(tot_a )< ACCEL_UNCERTAINTY && tot_gyro < GYRO_UNCERTAINTY);
 
+  if (!isTracking && wasDescending){
+    if (atRest){
+      restCount++;
+      if (restCount >= restRequired){
+        wasDescending = false;
+        restCount = 0;
+      }
+    }
+    else{
+      restCount = 0;
+    }
+    return;
+
+  }
+  
   if (fabs(tot_a) >= ACCEL_UNCERTAINTY){
     if (!isTracking){
       Serial.println("Tracking");
@@ -135,8 +155,6 @@ void loop() {
   
   /*
   vel = vI + tot_a * t; // Kinematics equation
-
-  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
   
   // Checks if the bar is racked 
   if (tot_a == 0 && tot_gyro < GYRO_UNCERTAINTY) {
@@ -187,6 +205,9 @@ void loop() {
   else{
     vel = 0;
     isTracking = false;
+    wasDescending = true;
+    vI = vel;
+    return;
   }
 
   // checks if the velocity is less than the last 
