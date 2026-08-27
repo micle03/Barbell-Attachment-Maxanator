@@ -153,7 +153,7 @@ void loop() {
   Serial.print(" Total: ");
   Serial.println(tot_a);
   
-  /*
+  
   vel = vI + tot_a * t; // Kinematics equation
   
   // Checks if the bar is racked 
@@ -190,17 +190,35 @@ void loop() {
   }
 
   if (vel > 0){
-    // Finds if the current weight is max 
-    if (vel >= FAIL_BENCH - VEL_UNCERTAINTY && vel <= FAIL_BENCH + VEL_UNCERTAINTY) {
-      vI = vel;
-      return; 
-    } 
-    
-    // Finds estimated max 
+    // Finds estimated max
     force = weightKgs * tot_a;
     added_weight = (force / gravity) * kg_to_lbs;
     estimated_max = weightLbs + added_weight;
+
+    if (vel > peak_vel){
     
+      peak_vel = vel;
+    }
+
+    // checks if max is more than last
+    if (estimated_max > peak_max){
+      peak_max = estimated_max;
+    }
+
+    vI = vel;
+    // Finds if the current weight is max 
+    if (vel >= FAIL_BENCH - VEL_UNCERTAINTY && vel <= FAIL_BENCH + VEL_UNCERTAINTY) {
+      // checks if velocity is bigger than the last 
+      if (vel > peak_vel){
+        
+        peak_vel = vel;
+      }
+      // checks if max is bigger than last
+      if (estimated_max > peak_max){
+        peak_max = estimated_max;
+      }
+      return; 
+    } 
   } 
   else{
     vel = 0;
@@ -209,17 +227,4 @@ void loop() {
     vI = vel;
     return;
   }
-
-  // checks if the velocity is less than the last 
-  if (vel > peak_vel){
-    
-    peak_vel = vel;
-  }
-
-  // checks if max is more than last
-  if (estimated_max > peak_max){
-    peak_max = estimated_max;
-  }
-
-  vI = vel; */
 }
