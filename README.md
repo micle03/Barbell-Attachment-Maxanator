@@ -1,6 +1,6 @@
 # BAM - Barbell Attachment Maxanator
 
-A hardware and software system designed to measure and track barbell lifting velocity during strength training. The device captures motion telemetry using an onboard accelerometer and gyroscope, processes the data, and transmits it wirelessly to a mobile dashboard for real-time performance tracking.
+A hardware and software system designed to measure and track barbell lifting velocity during strength training. The device captures motion telemetry using an onboard accelerometer and gyroscope, processes the data, and transmits it wirelessly to a mobile dashboard for real time performance tracking.
 
 Features
 
