@@ -4,9 +4,9 @@ A hardware and software system designed to measure and track barbell lifting vel
 
 Features
 
-- Real-time barbell velocity measurement utilizing complementary filtering.
+- Real time barbell velocity measurement utilizing complementary filtering.
 - Wireless telemetry transmission to a live mobile dashboard.
-- Custom, parametric snap-fit enclosure designed for a secure fit on the equipment.
+- Custom, parametric snap fit enclosure designed for a secure fit on the equipment.
 
 Hardware Components
 
@@ -15,6 +15,6 @@ Hardware Components
 - 3D-Printed Enclosure
 
 Software & Tools
-- Firmware: C++
+- Firmware: C++ on Arduino IDE
 - Mobile Platform: Blynk App
 - 3D Modeling: OpenSCAD
