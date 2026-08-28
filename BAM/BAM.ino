@@ -49,6 +49,8 @@ bool isRacked = false;
 bool isTracking = false;
 bool wasDescending = false;
 
+int i = 0;
+
 // Sets weight value from Blynk app 
 BLYNK_WRITE(V2) {
   weightLbs = param.asFloat();
@@ -85,7 +87,7 @@ void setup(void) {
 }
 
 // "return" does the same as "continue" for a normal while or for loop in the loop() function
-void loop() {
+void loop(){
   // Blynk.run(); 
 
   // Defining and initalizing the variables of a and g 
@@ -170,11 +172,16 @@ void loop() {
   // If bar is actually racked stop tracking, send the values to Blynk and reset variables to default values
   if (isRacked && millis() - timeRacked >= 3000){
     isTracking = false;
-    
+    if (i > 0){
+      peak_max /= i; // Finds the average across the entire rep
+    }
+  
+
     Blynk.virtualWrite(V0, peak_vel);
     Blynk.virtualWrite(V1, peak_max);
     Blynk.syncVirtual(V2);
 
+    i = 0;
     peak_vel = 0;
     peak_max = 0;
     tot_a = 0;
@@ -195,28 +202,18 @@ void loop() {
     added_weight = (force / gravity) * kg_to_lbs;
     estimated_max = weightLbs + added_weight;
 
+    // checks if vel is more than last
     if (vel > peak_vel){
-    
       peak_vel = vel;
     }
-
-    // checks if max is more than last
-    if (estimated_max > peak_max){
-      peak_max = estimated_max;
-    }
+    
+    peak_max += estimated_max;
+    i++;
+    
 
     vI = vel;
     // Finds if the current weight is max 
     if (vel >= FAIL_BENCH - VEL_UNCERTAINTY && vel <= FAIL_BENCH + VEL_UNCERTAINTY) {
-      // checks if velocity is bigger than the last 
-      if (vel > peak_vel){
-        
-        peak_vel = vel;
-      }
-      // checks if max is bigger than last
-      if (estimated_max > peak_max){
-        peak_max = estimated_max;
-      }
       return; 
     } 
   } 
