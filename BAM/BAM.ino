@@ -21,11 +21,11 @@ unsigned long startTime = 0;
 unsigned long elapsedTime = 0;
 unsigned long timeRacked = 0;
 
-const float gravity = 9.81; 
-const float ACCEL_UNCERTAINTY = 0.3;  
+const float gravity = 9.81;
+const float ACCEL_UNCERTAINTY = 0.3;
 const float GYRO_UNCERTAINTY  = 0.05;
-const float VEL_UNCERTAINTY = 0.012;  
-const float FAIL_BENCH = 0.15;  
+const float VEL_UNCERTAINTY = 0.012;
+const float FAIL_BENCH = 0.15;
 const float kg_to_lbs = 2.2046;
 const float restRequired = 10;
 
@@ -39,9 +39,9 @@ float tot_a= 0;
 float force = 0;
 float added_weight = 0;
 float estimated_max = 0;
-float peak_vel = 0;
+float mean_vel = 0;
 float peak_max = 0;
-float weightLbs = 0; 
+float weightLbs = 0;
 float weightKgs = 0;
 float restCount = 0;
 
@@ -49,9 +49,9 @@ bool isRacked = false;
 bool isTracking = false;
 bool wasDescending = false;
 
-int i = 0;
+int cycles = 0;
 
-// Sets weight value from Blynk app 
+// Sets weight value from Blynk app
 BLYNK_WRITE(V2) {
   weightLbs = param.asFloat();
   weightKgs = weightLbs / kg_to_lbs;
@@ -88,7 +88,7 @@ void setup(void) {
 
 // "return" does the same as "continue" for a normal while or for loop in the loop() function
 void loop(){
-  // Blynk.run(); 
+  Blynk.run();
 
   // Defining and initalizing the variables of a and g 
   sensors_event_t a, g;
@@ -100,18 +100,18 @@ void loop(){
 
   // Finds angles from away from Z axis using acceleration
   float pitch_angle = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + a.acceleration.z * a.acceleration.z)) * RAD_TO_DEG;
-  float roll_angle = atan2(-a.acceleration.x, sqrt(a.acceleration.z * a.acceleration.z + a.acceleration.y * a.acceleration.y )) * RAD_TO_DEG; 
+  float roll_angle = atan2(-a.acceleration.x, sqrt(a.acceleration.z * a.acceleration.z + a.acceleration.y * a.acceleration.y )) * RAD_TO_DEG;
 
   // Takes 98% accuracy of the gyroscope and 2% of the acceleration angles to dampen noise
-  pitch = 0.98 * (pitch + (g.gyro.x * RAD_TO_DEG) * t) + 0.02 * pitch_angle; 
+  pitch = 0.98 * (pitch + (g.gyro.x * RAD_TO_DEG) * t) + 0.02 * pitch_angle;
   roll = 0.98 * (roll + (g.gyro.y * RAD_TO_DEG) * t) + 0.02 * roll_angle;
   
   pitch_RAD = pitch * DEG_TO_RAD;
   roll_RAD = roll * DEG_TO_RAD;
 
   // Uses rotation matrix of Rx dot Ry and uses the 3rd row for Z axis acceleration calcualtions and find the total acceleration subtracting gravity
-  tot_a = (-sin(pitch_RAD) * a.acceleration.x + sin(roll_RAD)*cos(pitch_RAD) * a.acceleration.y + cos(roll_RAD)*cos(pitch_RAD) * a.acceleration.z) - gravity; 
-  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z); 
+  tot_a = (-sin(pitch_RAD) * a.acceleration.x + sin(roll_RAD)*cos(pitch_RAD) * a.acceleration.y + cos(roll_RAD)*cos(pitch_RAD) * a.acceleration.z) - gravity;
+  float tot_gyro = sqrt(g.gyro.x * g.gyro.x + g.gyro.y * g.gyro.y + g.gyro.z * g.gyro.z);
   bool atRest = (fabs(tot_a )< ACCEL_UNCERTAINTY && tot_gyro < GYRO_UNCERTAINTY);
 
   if (!isTracking && wasDescending){
@@ -158,7 +158,7 @@ void loop(){
   
   vel = vI + tot_a * t; // Kinematics equation
   
-  // Checks if the bar is racked 
+  // Checks if the bar is racked
   if (tot_a == 0 && tot_gyro < GYRO_UNCERTAINTY) {
     if (!isRacked){
       timeRacked = millis();
@@ -172,22 +172,22 @@ void loop(){
   // If bar is actually racked stop tracking, send the values to Blynk and reset variables to default values
   if (isRacked && millis() - timeRacked >= 3000){
     isTracking = false;
-    if (i > 0){
-      peak_max /= i; // Finds the average across the entire rep
+    if (cycles > 0){
+      mean_vel /= cycles;
+      peak_max /= cycles; // Finds the average across the entire rep
     }
-  
 
-    Blynk.virtualWrite(V0, peak_vel);
+    Blynk.virtualWrite(V0, mean_vel);
     Blynk.virtualWrite(V1, peak_max);
     Blynk.syncVirtual(V2);
 
-    i = 0;
-    peak_vel = 0;
+    cycles = 0;
+    mean_vel = 0;
     peak_max = 0;
     tot_a = 0;
     vel = 0;
     vI = vel;
-    pitch = 0;              
+    pitch = 0;
     roll = 0;
     pitch_RAD = 0;
     roll_RAD = 0;
@@ -197,25 +197,23 @@ void loop(){
   }
 
   if (vel > 0){
-    // Finds estimated max
+    // Finds estimated max for this cycle
     force = weightKgs * tot_a;
     added_weight = (force / gravity) * kg_to_lbs;
     estimated_max = weightLbs + added_weight;
 
     // checks if vel is more than last
-    if (vel > peak_vel){
-      peak_vel = vel;
-    }
+    
+    mean_vel += vel;
     
     peak_max += estimated_max;
     i++;
-    
 
     vI = vel;
-    // Finds if the current weight is max 
+    // Finds if the current weight is max
     if (vel >= FAIL_BENCH - VEL_UNCERTAINTY && vel <= FAIL_BENCH + VEL_UNCERTAINTY) {
-      return; 
-    } 
+      return;
+    }
   } 
   else{
     vel = 0;
